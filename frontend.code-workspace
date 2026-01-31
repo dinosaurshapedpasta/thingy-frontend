@@ -1,28 +1,28 @@
 {
-	"folders": [
-		{
-			"path": "."
-		}
-	],
-	"settings": {
-		"editor.formatOnSave": true,
-		"vscode-pets.theme": "autumn",
-		"javascript.format.semicolons": "insert",
-		"typescript.format.semicolons": "insert",
-		"conventionalCommits.gitmoji": false,
-		"javascript.preferences.quoteStyle": "double",
-		"typescript.preferences.quoteStyle": "double",
-		"css.format.newlineBetweenSelectors": false
-	},
-	"extensions": {
-		"recommendations": [
-			"eamodio.gitlens",
-			"vivaxy.vscode-conventional-commits",
-			"editorconfig.editorconfig",
-			"davidanson.vscode-markdownlint",
-			"42crunch.vscode-openapi",
-			"gruntfuggly.todo-tree",
-			"tonybaloney.vscode-pets"
-		]
-	}
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "editor.formatOnSave": true,
+        "vscode-pets.theme": "autumn",
+        "javascript.format.semicolons": "insert",
+        "typescript.format.semicolons": "insert",
+        "conventionalCommits.gitmoji": false,
+        "javascript.preferences.quoteStyle": "double",
+        "typescript.preferences.quoteStyle": "double",
+        "css.format.newlineBetweenSelectors": false
+    },
+    "extensions": {
+        "recommendations": [
+            "eamodio.gitlens",
+            "vivaxy.vscode-conventional-commits",
+            "editorconfig.editorconfig",
+            "davidanson.vscode-markdownlint",
+            "42crunch.vscode-openapi",
+            "gruntfuggly.todo-tree",
+            "tonybaloney.vscode-pets"
+        ]
+    }
 }

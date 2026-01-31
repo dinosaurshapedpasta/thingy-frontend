@@ -1,0 +1,10 @@
+# stupid things
+
+*Zone.Identifier
+.DS_Store
+
+# less stupid things
+.env
+node_modules/
+.react-router/
+build/
