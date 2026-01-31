@@ -17,7 +17,7 @@ export const links: Route.LinksFunction = () => [
     {
         rel: "stylesheet",
         type: "text/css",
-        href: "/css/global.css"
+        href: "/assets/css/global.css"
     }
 ];
 

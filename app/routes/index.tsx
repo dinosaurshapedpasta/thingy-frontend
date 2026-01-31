@@ -20,24 +20,7 @@ export default function Index(): ReactNode {
                 px: 2
             }}
         >
-            <Typography
-                variant="h1"
-                align="center"
-            >
-                OMG IT'S A TEST PAGEEEE
-            </Typography>
-            <Typography
-                align="center"
-            >
-                yeah if you can see this in the center of the page that means things are working
-            </Typography>
-            <img
-                src="https://ichack.org/favicon.ico"
-                style={{
-                    height: 64,
-                    marginTop: 32
-                }}
-            />
+
         </Stack>
     );
 }

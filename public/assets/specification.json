@@ -1,0 +1,1353 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "thingy",
+    "description": "thingy api",
+    "version": "v1"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "Local server??"
+    },
+    {
+      "url": "/api",
+      "description": "Development server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "ApiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Api-Key"
+      }
+    },
+    "schemas": {
+      "StandardResponse": {
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "The HTTP status code."
+          },
+          "message": {
+            "type": "string",
+            "description": "A short message explaining the result."
+          }
+        },
+        "example": {
+          "code": 404,
+          "message": "The requested resource could not be found."
+        }
+      },
+      "UUID": {
+        "description": "A unique identifier.",
+        "type": "string",
+        "example": "428ea120-2c3a-44ba-9b32-9d501d5f9786"
+      },
+      "UserType": {
+        "description": "A user's type.\n0: Volunteer\n1: Manager",
+        "type": "integer",
+        "enum": [
+          0,
+          1
+        ]
+      },
+      "Location": {
+        "description": "A location of a point on a map, "
+      },
+      "User": {
+        "description": "API representation of a user",
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "name": {
+            "type": "string",
+            "example": "username",
+            "minLength": 2,
+            "maxLength": 32
+          },
+          "karma": {
+            "type": "integer",
+            "example": 42,
+            "description": "Karma based on a user's recent actions"
+          },
+          "maxVolume": {
+            "type": "number",
+            "example": 3.5,
+            "description": "The maximum volume of a user's car in m^3"
+          },
+          "userType": {
+            "$ref": "#/components/schemas/UserType"
+          }
+        }
+      },
+      "Item": {
+        "description": "API representation of an item.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "name": {
+            "type": "string",
+            "example": "item name",
+            "maxLength": 48
+          },
+          "volume": {
+            "description": "The item's volume in m^3",
+            "type": "number",
+            "example": 0.2
+          }
+        }
+      },
+      "PickupPoint": {
+        "description": "API representation of a pickup point.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "name": {
+            "type": "string",
+            "example": "pickup point name",
+            "maxLength": 48
+          },
+          "location": {}
+        }
+      },
+      "StoragePoint": {
+        "description": "API representation of a storage point.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "name": {
+            "type": "string",
+            "example": "storage point name",
+            "maxLength": 48
+          },
+          "maxVolume": {
+            "type": "number",
+            "example": 3.5,
+            "description": "The maximum volume of the storage point's space in m^3"
+          }
+        }
+      },
+      "DropOffPoint": {
+        "description": "API representation of a drop off point.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "name": {
+            "type": "string",
+            "example": "drop off point name",
+            "maxLength": 48
+          }
+        }
+      },
+      "PickupRequest": {
+        "description": "API representation of a pickup request.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "pickupPointID": {
+            "description": "The ID of the associated pickup point.",
+            "$ref": "#/components/schemas/UUID"
+          }
+        }
+      }
+    },
+    "responses": {
+      "ActionSuccessful": {
+        "description": "The action was carried out successfully.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/StandardResponse"
+            },
+            "example": {
+              "code": 200,
+              "message": "Action carried out successfully."
+            }
+          }
+        }
+      },
+      "MalformedRequest": {
+        "description": "The server couldn't understand the user's request/the user's request was invalid.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/StandardResponse"
+            },
+            "example": {
+              "code": 400,
+              "message": "Invalid parameters/request body."
+            }
+          }
+        }
+      },
+      "UserNotAuthenticated": {
+        "description": "The user is not logged in/using a valid API key.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/StandardResponse"
+            },
+            "example": {
+              "code": 401,
+              "message": "You are not logged in/using a valid API key."
+            }
+          }
+        }
+      },
+      "UserNotAuthorised": {
+        "description": "The user is not authorised to carry out the intended action.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/StandardResponse"
+            },
+            "example": {
+              "code": 403,
+              "message": "You are not authorised to carry out this action."
+            }
+          }
+        }
+      },
+      "ResourceNotFound": {
+        "description": "The requested resource could not be found.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/StandardResponse"
+            },
+            "example": {
+              "code": 404,
+              "message": "The requested resource could not be found."
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "user",
+      "description": "User-related endpoints."
+    },
+    {
+      "name": "item",
+      "description": "Item-related endpoints."
+    },
+    {
+      "name": "pickup",
+      "description": "Pickup-point-related endpoints."
+    },
+    {
+      "name": "storage",
+      "description": "Storage-point-related endpoints."
+    },
+    {
+      "name": "dropoff",
+      "description": "Drop-off-point related endpoints."
+    }
+  ],
+  "paths": {
+    "/test": {
+      "get": {
+        "summary": "Check the API is online.",
+        "responses": {
+          "200": {
+            "description": "Some sample data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "A random piece of text.",
+                      "example": "omg it's a thing"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/me": {
+      "get": {
+        "summary": "Get details about yourself.",
+        "tags": [
+          "user"
+        ],
+        "responses": {
+          "200": {
+            "description": "Data about yourself.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Change details about yourself.",
+        "tags": [
+          "user"
+        ],
+        "requestBody": {
+          "description": "New user details. (ignores ID, user ID cannot be changed after account creation)",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The changed user details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          }
+        }
+      }
+    },
+    "/user/me/location": {
+      "post": {
+        "summary": "Send a user's own location. Called when requests from managers are accepted for pathfinding.",
+        "tags": [
+          "user"
+        ],
+        "requestBody": {
+          "description": "User's location details.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string",
+                "description": "The user's current coordinates.",
+                "example": "51°29'57.0\"N 0°10'39.3\"W"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ActionSuccessful"
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          }
+        }
+      }
+    },
+    "/user/{id}": {
+      "get": {
+        "summary": "Get details about a user.",
+        "tags": [
+          "user"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Change details about a user.",
+        "tags": [
+          "user"
+        ],
+        "requestBody": {
+          "description": "New user details. (ignores ID, user ID cannot be changed after account creation)",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The modified user's details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      }
+    },
+    "/user/{id}/items": {
+      "get": {
+        "summary": "Get the items currently held by a user.",
+        "tags": [
+          "item"
+        ],
+        "responses": {
+          "200": {
+            "description": "The items IDs and their quantity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "$ref": "#/components/schemas/UUID"
+                      },
+                      "quantity": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      }
+    },
+    "/item": {
+      "post": {
+        "summary": "Create a new type of item.",
+        "tags": [
+          "item"
+        ],
+        "requestBody": {
+          "description": "New item details. (ignores ID, item ID assigned automatically by server)",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Item"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The new item's details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      }
+    },
+    "/item/{id}": {
+      "get": {
+        "summary": "Get details about an item.",
+        "tags": [
+          "item"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested item.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Change details about an item.",
+        "tags": [
+          "item"
+        ],
+        "requestBody": {
+          "description": "New item details. (ignores ID, item ID cannot be changed after account creation)",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Item"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The changed item's details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      }
+    },
+    "/pickup": {
+      "post": {
+        "summary": "Create a new pickup point.",
+        "tags": [
+          "pickup"
+        ],
+        "requestBody": {
+          "description": "New pickup point details. (ignores ID, pickup point ID assigned automatically by server)",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PickupPoint"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The new pickup point's details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickupPoint"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      }
+    },
+    "/pickup/{id}": {
+      "get": {
+        "summary": "Get details about a pickup point.",
+        "tags": [
+          "pickup"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested pickup point.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickupPoint"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Change details about a pickup point.",
+        "tags": [
+          "pickup"
+        ],
+        "requestBody": {
+          "description": "New pickup point details. (ignores ID, pickup point ID cannot be changed after account creation)",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PickupPoint"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The changed pickup point's details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickupPoint"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      }
+    },
+    "/pickup/{id}/items": {
+      "get": {
+        "summary": "Get the items currently held by a pickup point.",
+        "tags": [
+          "item"
+        ],
+        "responses": {
+          "200": {
+            "description": "The items IDs and their quantity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "$ref": "#/components/schemas/UUID"
+                      },
+                      "quantity": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      }
+    },
+    "/storage": {
+      "post": {
+        "summary": "Create a new storage point.",
+        "tags": [
+          "storage"
+        ],
+        "requestBody": {
+          "description": "New storage point details. (ignores ID, storage point ID assigned automatically by server)",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoragePoint"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The new storage point's details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoragePoint"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      }
+    },
+    "/storage/{id}": {
+      "get": {
+        "summary": "Get details about a storage point.",
+        "tags": [
+          "storage"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested storage point.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoragePoint"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Change details about a storage point.",
+        "tags": [
+          "storage"
+        ],
+        "requestBody": {
+          "description": "New storage point details. (ignores ID, storage point ID cannot be changed after account creation)",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoragePoint"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The changed storage point's details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoragePoint"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      }
+    },
+    "/storage/{id}/items": {
+      "get": {
+        "summary": "Get the itms currently held by a storage point.",
+        "tags": [
+          "item"
+        ],
+        "responses": {
+          "200": {
+            "description": "The items IDs and their quantity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "$ref": "#/components/schemas/UUID"
+                      },
+                      "quantity": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      }
+    },
+    "/dropoff/{id}": {
+      "get": {
+        "summary": "Get details about a drop off point.",
+        "tags": [
+          "dropoff"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested drop off point.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DropOffPoint"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Change details about a drop off point.",
+        "tags": [
+          "dropoff"
+        ],
+        "requestBody": {
+          "description": "New drop off point details. (ignores ID, drop off point ID cannot be changed after account creation)",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DropOffPoint"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The changed drop off point's details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DropOffPoint"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      }
+    },
+    "/pickuprequests": {
+      "get": {
+        "summary": "Get active pickup requests.",
+        "tags": [
+          "pickup"
+        ],
+        "responses": {
+          "200": {
+            "description": "All active pickup requests.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PickupRequest"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      },
+      "post": {
+        "summary": "Submit a new pickup request. ONLY AVAILABLE TO MANAGERS",
+        "tags": [
+          "pickup"
+        ],
+        "requestBody": {
+          "description": "New pickup request details. (ignores ID, assigned by server)",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PickupRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The new pickup request's details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoragePoint"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      }
+    },
+    "/pickuprequests/{id}": {
+      "delete": {
+        "summary": "Delete an active pickup request. ONLY AVAILABLE TO MANAGERS",
+        "tags": [
+          "pickup"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ActionSuccessful"
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      }
+    },
+    "/pickuprequests/{id}/responses": {
+      "get": {
+        "summary": "Get the responses to a pickup request. ONLY AVAILABLE TO MANAGERS",
+        "tags": [
+          "pickup"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested responses.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "userID": {
+                        "$ref": "#/components/schemas/UUID"
+                      },
+                      "response": {
+                        "type": "string",
+                        "enum": [
+                          "accept",
+                          "deny"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      }
+    },
+    "/pickuprequests/{id}/accept": {
+      "post": {
+        "summary": "Accept a pickup request. ONLY AVAILABLE TO VOLUNTEERS",
+        "tags": [
+          "pickup"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ActionSuccessful"
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      }
+    },
+    "/pickuprequests/{id}/deny": {
+      "post": {
+        "summary": "Deny a pickup request. ONLY AVAILABLE TO VOLUNTEERS",
+        "tags": [
+          "pickup"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ActionSuccessful"
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      }
+    }
+  }
+}
