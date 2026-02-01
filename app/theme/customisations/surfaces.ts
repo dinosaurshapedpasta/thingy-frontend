@@ -14,7 +14,7 @@ export const surfaces: Components<Theme> = {
                 overflow: "clip",
                 backgroundColor: (theme.vars || theme).palette.background.default,
                 border: "1px solid",
-                boderColor: (theme.vars || theme).palette.divider,
+                borderColor: (theme.vars || theme).palette.divider,
                 ":before": {
                     backgroundColor: "transparent"
                 },
