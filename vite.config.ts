@@ -5,6 +5,9 @@ import tsconfigPaths from "vite-tsconfig-paths";
 export default defineConfig({
     plugins: [reactRouter(), tsconfigPaths()],
     server: {
-        host: true
+        host: true,
+        allowedHosts: [
+            "ichack.unigeorge.uk"
+        ]
     }
 });
