@@ -1,8 +1,13 @@
 import { Accordion, AccordionDetails, AccordionSummary, Alert, alertClasses, Box, Button, Paper, Stack, Typography } from "@mui/material";
-import { useContext, useEffect, useState, type ReactNode } from "react";
+import DmsCoordinates, { parseDms } from "dms-conversion";
+import { lazy, Suspense, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import type { MarkerData } from "~/components/Map";
 import { ModeSwitcher } from "~/components/ModeSwitcher";
 import { AuthGuardUserContext } from "~/context/AuthGuardUserContext";
 import { APIManager, type PickupObject, type PickupRequestObject, type PickupRequestResponseObject } from "~/managers/APIManager";
+
+// Dynamically import MapComponent to avoid SSR issues with Leaflet
+const MapComponent = lazy(() => import("~/components/Map").then(module => ({ default: module.MapComponent })));
 
 export const VolunteerDashboard = (): ReactNode => {
     const [alerts, setAlerts] = useState<PickupRequestObject[]>();
@@ -18,8 +23,6 @@ export const VolunteerDashboard = (): ReactNode => {
     useEffect(() => {
         APIManager.PickupRequest.getActive().then(x => {
             setAlerts(x);
-            console.log("here");
-            console.log(x);
         });
     }, [reloadThingsToggle]);
 
@@ -51,6 +54,28 @@ export const VolunteerDashboard = (): ReactNode => {
 
     const filteredAlerts = alerts?.filter(x => !responses[x.id]?.map(y => y.userID).includes(me?.id || ""));
 
+    const markers = useMemo(() => {
+        if (!fullyLoaded || !alerts) return [];
+
+        return alerts.map(alert => {
+            const pickup = pickupMap[alert.pickupPointID];
+            if (!pickup?.location) return undefined;
+
+            // Parse location string - expecting "lat,lng" format
+            const [lat, lng] = pickup.location.split(" ").map(parseDms);
+
+            if (isNaN(lat) || isNaN(lng)) return null;
+
+            return {
+                lat,
+                lng,
+                label: pickup.name,
+                id: pickup.id
+            } as MarkerData;
+        })
+            .filter((marker): marker is MarkerData => marker !== null);
+    }, [fullyLoaded]);
+
     return (
         <Stack
             sx={theme => ({
@@ -69,18 +94,31 @@ export const VolunteerDashboard = (): ReactNode => {
                         p: 2,
                         [theme.breakpoints.up("md")]: {
                             width: "40vw"
-                        }
+                        },
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 2,
+                        height: "80vh"
                     })}
                 >
-                    <Typography
-                        variant="h1"
-                        sx={{
-                            textAlign: "center",
-                            py: 30
-                        }}
-                    >
-                        MAP
-                    </Typography>
+                    <Suspense fallback={
+                        <Box
+                            sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                height: "100%"
+                            }}
+                        >
+                            <Typography>Loading map...</Typography>
+                        </Box>
+                    }>
+                        <MapComponent
+                            markers={markers}
+                            height="100%"
+                            zoom={13}
+                        />
+                    </Suspense>
                     <ModeSwitcher />
                 </Paper>
             </Box>
@@ -116,61 +154,65 @@ export const VolunteerDashboard = (): ReactNode => {
                     job alerts
                 </Typography>
 
-                {
-                    !fullyLoaded || !alerts ?
-                        <Typography>
-                            loading...
-                        </Typography>
-                        :
-                        filteredAlerts?.length == 0 ?
+                <Stack
+                    gap={2}
+                >
+                    {
+                        !fullyLoaded || !alerts ?
                             <Typography>
-                                none
+                                loading...
                             </Typography>
                             :
-                            filteredAlerts?.map(x => (
-                                <Alert
-                                    severity="info"
-                                    variant="filled"
-                                    sx={{
-                                        [`& .${alertClasses.message}`]: {
-                                            flexGrow: 1
-                                        }
-                                    }}
-                                >
-                                    <Typography>
-                                        New pickup request at {pickupMap[x.pickupPointID]?.name || x.pickupPointID}!!
-                                    </Typography>
-                                    <Stack
-                                        justifyContent="end"
-                                        width={1}
-                                        gap={2}
-                                        direction="row"
-                                        alignItems="center"
+                            filteredAlerts?.length == 0 ?
+                                <Typography>
+                                    none
+                                </Typography>
+                                :
+                                filteredAlerts?.map(x => (
+                                    <Alert
+                                        severity="info"
+                                        variant="filled"
+                                        sx={{
+                                            [`& .${alertClasses.message}`]: {
+                                                flexGrow: 1
+                                            }
+                                        }}
                                     >
-                                        <Button
-                                            color="error"
-                                            variant="contained"
-                                            onClick={async () => {
-                                                await APIManager.PickupRequest.deny(x.id);
-                                                reload();
-                                            }}
+                                        <Typography>
+                                            New pickup request at {pickupMap[x.pickupPointID]?.name || x.pickupPointID}!!
+                                        </Typography>
+                                        <Stack
+                                            justifyContent="end"
+                                            width={1}
+                                            gap={2}
+                                            direction="row"
+                                            alignItems="center"
                                         >
-                                            deny
-                                        </Button>
-                                        <Button
-                                            color="success"
-                                            variant="contained"
-                                            onClick={async () => {
-                                                await APIManager.PickupRequest.accept(x.id);
-                                                reload();
-                                            }}
-                                        >
-                                            accept
-                                        </Button>
-                                    </Stack>
-                                </Alert>
-                            ))
-                }
+                                            <Button
+                                                color="error"
+                                                variant="contained"
+                                                onClick={async () => {
+                                                    await APIManager.PickupRequest.deny(x.id);
+                                                    reload();
+                                                }}
+                                            >
+                                                deny
+                                            </Button>
+                                            <Button
+                                                color="success"
+                                                variant="contained"
+                                                onClick={async () => {
+                                                    await APIManager.PickupRequest.accept(x.id);
+                                                    reload();
+                                                }}
+                                            >
+                                                accept
+                                            </Button>
+                                        </Stack>
+                                    </Alert>
+                                ))
+                    }
+                </Stack>
 
                 <Typography
                     variant="h3"
