@@ -55,9 +55,7 @@ export const VolunteerDashboard = (): ReactNode => {
     const filteredAlerts = alerts?.filter(x => !responses[x.id]?.map(y => y.userID).includes(me?.id || ""));
 
     const markers = useMemo(() => {
-        if (!fullyLoaded || !alerts) return [];
-
-        return alerts.map(alert => {
+        const pickupMarkers = !fullyLoaded || !alerts ? [] : alerts.map(alert => {
             const pickup = pickupMap[alert.pickupPointID];
             if (!pickup?.location) return undefined;
 
@@ -70,11 +68,22 @@ export const VolunteerDashboard = (): ReactNode => {
                 lat,
                 lng,
                 label: pickup.name,
-                id: pickup.id
+                id: pickup.id,
+                color: 'red'
             } as MarkerData;
         })
             .filter((marker): marker is MarkerData => marker !== null);
-    }, [fullyLoaded]);
+
+        // Add Houses of Parliament marker
+        const parliamentMarker: MarkerData = {
+            lat: 51.4995,
+            lng: -0.1248,
+            label: "Houses of Parliament",
+            id: "parliament"
+        };
+
+        return [...pickupMarkers, parliamentMarker];
+    }, [fullyLoaded, alerts, pickupMap]);
 
     return (
         <Stack
@@ -117,6 +126,8 @@ export const VolunteerDashboard = (): ReactNode => {
                             markers={markers}
                             height="100%"
                             zoom={13}
+                            routeStart={markers.length > 0 ? [markers[0].lat, markers[0].lng] : undefined}
+                            routeEnd={[51.4995, -0.1248]}
                         />
                     </Suspense>
                     <ModeSwitcher />
