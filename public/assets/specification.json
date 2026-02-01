@@ -58,7 +58,9 @@
         ]
       },
       "Location": {
-        "description": "A location of a point on a map, "
+        "description": "A location of a point on a map.",
+        "type": "string",
+        "example": "51°29'57.0\"N 0°10'39.3\"W"
       },
       "User": {
         "description": "API representation of a user",
@@ -122,7 +124,9 @@
             "example": "pickup point name",
             "maxLength": 48
           },
-          "location": {}
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          }
         }
       },
       "StoragePoint": {
@@ -141,6 +145,9 @@
             "type": "number",
             "example": 3.5,
             "description": "The maximum volume of the storage point's space in m^3"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
           }
         }
       },
@@ -155,6 +162,9 @@
             "type": "string",
             "example": "drop off point name",
             "maxLength": 48
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
           }
         }
       },
@@ -365,9 +375,14 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "string",
-                "description": "The user's current coordinates.",
-                "example": "51°29'57.0\"N 0°10'39.3\"W"
+                "type": "object",
+                "properties": {
+                  "location": {
+                    "type": "string",
+                    "description": "The user's current coordinates.",
+                    "example": "51°29'57.0\"N 0°10'39.3\"W"
+                  }
+                }
               }
             }
           }
@@ -508,6 +523,67 @@
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      }
+    },
+    "/user/{userID}/items/{itemID}": {
+      "patch": {
+        "summary": "Set the quantity of an item in a user's car.",
+        "tags": [
+          "item"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "in": "path",
+            "name": "itemID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "The item's quantity.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "quantity": {
+                    "type": "integer",
+                    "example": 2,
+                    "description": "The number to set the quantity to."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ActionSuccessful"
           },
           "400": {
             "$ref": "#/components/responses/MalformedRequest"
@@ -802,6 +878,16 @@
         "tags": [
           "item"
         ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "The items IDs and their quantity.",
@@ -823,6 +909,67 @@
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      }
+    },
+    "/pickup/{pickupID}/items/{itemID}": {
+      "patch": {
+        "summary": "Set the quantity of an item at a pickup point.",
+        "tags": [
+          "item"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pickupID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "in": "path",
+            "name": "itemID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "The item's quantity.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "quantity": {
+                    "type": "integer",
+                    "example": 2,
+                    "description": "The number to set the quantity to."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ActionSuccessful"
           },
           "400": {
             "$ref": "#/components/responses/MalformedRequest"
@@ -981,6 +1128,16 @@
         "tags": [
           "item"
         ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "The items IDs and their quantity.",
@@ -999,6 +1156,110 @@
                       }
                     }
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      }
+    },
+    "/storage/{storageID}/items/{itemID}": {
+      "patch": {
+        "summary": "Set the quantity of an item at a storage point.",
+        "tags": [
+          "item"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "storageID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "in": "path",
+            "name": "itemID",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "The item's quantity.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "quantity": {
+                    "type": "integer",
+                    "example": 2,
+                    "description": "The number to set the quantity to."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ActionSuccessful"
+          },
+          "400": {
+            "$ref": "#/components/responses/MalformedRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UserNotAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/UserNotAuthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResourceNotFound"
+          }
+        }
+      }
+    },
+    "/dropoff": {
+      "post": {
+        "summary": "Create a new drop off point.",
+        "tags": [
+          "dropoff"
+        ],
+        "requestBody": {
+          "description": "New drop off point details. (ignores ID, drop off point ID assigned automatically by server)",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DropOffPoint"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The new drop off point's details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DropOffPoint"
                 }
               }
             }
@@ -1167,7 +1428,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StoragePoint"
+                  "$ref": "#/components/schemas/PickupRequest"
                 }
               }
             }
