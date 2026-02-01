@@ -8,7 +8,6 @@ import type { MarkerData } from "~/components/MapComponent";
 // Dynamically import MapComponent to avoid SSR issues with Leaflet
 const MapComponent = lazy(() => import("~/components/MapComponent").then(module => ({ default: module.MapComponent })));
 
-
 export const VolunteerDashboard = (): ReactNode => {
     const [alerts, setAlerts] = useState<PickupRequestObject[]>();
     const [pickupMap, setPickupMap] = useState<{ [K: string]: PickupObject | undefined; }>({});
