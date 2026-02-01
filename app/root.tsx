@@ -11,6 +11,7 @@ import type { Route } from "./+types/root";
 
 import "@fontsource-variable/funnel-sans";
 import { RootNode } from "./components/RootNode";
+import { Stack, Typography } from "@mui/material";
 
 
 export const links: Route.LinksFunction = () => [
@@ -63,15 +64,22 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
     }
 
     return (
-        <main className="pt-16 p-4 container mx-auto">
-            <h1>o nu</h1>
-            <h2>{message}</h2>
-            <p>{details}</p>
+        <Stack
+            justifyContent="center"
+            alignItems="center"
+            height="100vh"
+            sx={{
+                p: 2
+            }}
+        >
+            <Typography variant="h1">o nu</Typography>
+            <Typography variant="h2">{message}</Typography>
+            <Typography>{details}</Typography>
             <pre>
                 <code>
                     {stack}
                 </code>
             </pre>
-        </main>
+        </Stack>
     );
 }

@@ -11,7 +11,7 @@
       "description": "Local server??"
     },
     {
-      "url": "/api",
+      "url": "https://api-ichack.unigeorge.uk",
       "description": "Development server"
     }
   ],
