@@ -1,8 +1,6 @@
-import { Accordion, AccordionDetails, AccordionSummary, Alert, alertClasses, Box, Button, Paper, Stack, Typography } from "@mui/material";
-import DmsCoordinates, { Dms, parseDms } from "dms-conversion";
-import { lazy, Suspense, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { Alert, alertClasses, Box, Button, FormControl, FormLabel, Paper, Stack, TextField, Typography } from "@mui/material";
+import { lazy, Suspense, useContext, useEffect, useState, type ReactNode } from "react";
 import { Logout } from "~/components/Logout";
-import type { MarkerData } from "~/components/Map";
 import { ModeSwitcher } from "~/components/ModeSwitcher";
 import { AuthGuardUserContext } from "~/context/AuthGuardUserContext";
 import { APIManager, type PickupObject, type PickupRequestObject, type PickupRequestResponseObject } from "~/managers/APIManager";
@@ -10,8 +8,10 @@ import { APIManager, type PickupObject, type PickupRequestObject, type PickupReq
 // Dynamically import MapComponent to avoid SSR issues with Leaflet
 const MapComponent = lazy(() => import("~/components/Map").then(module => ({ default: module.MapComponent })));
 
-export const VolunteerDashboard = (): ReactNode => {
+export const ManagementDashboard = (): ReactNode => {
     const [alerts, setAlerts] = useState<PickupRequestObject[]>();
+    const [submissionID, setSubmissionID] = useState("");
+    const [submissionError, setSubmissionError] = useState("");
     const [pickupMap, setPickupMap] = useState<{ [K: string]: PickupObject | undefined; }>({});
     const [fullyLoaded1, setFullyLoaded1] = useState(false);
     const [fullyLoaded2, setFullyLoaded2] = useState(false);
@@ -19,13 +19,13 @@ export const VolunteerDashboard = (): ReactNode => {
     const [reloadThingsToggle, setReloadThingsToggle] = useState(false);
     const ctx = useContext(AuthGuardUserContext);
 
-    const me = ctx?.me;
-
     useEffect(() => {
         APIManager.PickupRequest.getActive().then(x => {
             setAlerts(x);
         });
     }, [reloadThingsToggle]);
+
+    const me = ctx?.me;
 
     useEffect(() => {
         let newMap = pickupMap;
@@ -52,30 +52,6 @@ export const VolunteerDashboard = (): ReactNode => {
     };
 
     const fullyLoaded = fullyLoaded1 && fullyLoaded2;
-
-    const filteredAlerts = alerts?.filter(x => !responses[x.id]?.map(y => y.userID).includes(me?.id || ""));
-
-    const markers = useMemo(() => {
-        if (!fullyLoaded || !alerts) return [];
-
-        return alerts.map(alert => {
-            const pickup = pickupMap[alert.pickupPointID];
-            if (!pickup?.location) return undefined;
-
-            // Parse location string - expecting "lat,lng" format
-            const [lat, lng] = pickup.location.split(" ").map(parseDms);
-
-            if (isNaN(lat) || isNaN(lng)) return null;
-
-            return {
-                lat,
-                lng,
-                label: pickup.name,
-                id: pickup.id
-            } as MarkerData;
-        })
-            .filter((marker): marker is MarkerData => marker !== null);
-    }, [fullyLoaded]);
 
     return (
         <Stack
@@ -115,7 +91,7 @@ export const VolunteerDashboard = (): ReactNode => {
                         </Box>
                     }>
                         <MapComponent
-                            markers={markers}
+                            // markers={markers}
                             height="100%"
                             zoom={13}
                         />
@@ -135,7 +111,7 @@ export const VolunteerDashboard = (): ReactNode => {
                     >
                         {me?.name}
                     </span>
-                    , you're a volunteer!
+                    , you're a manager!
                 </Typography>
                 <Typography
                     sx={{
@@ -145,31 +121,23 @@ export const VolunteerDashboard = (): ReactNode => {
                     id: {me?.id}
                 </Typography>
 
-                <Typography
-                    variant="h3"
-                    sx={{
-                        mt: 3,
-                        mb: 1
-                    }}
-                >
-                    job alerts
-                </Typography>
-
                 <Stack
                     gap={2}
                 >
                     {
-                        !fullyLoaded || !alerts ?
-                            <Typography>
-                                loading...
-                            </Typography>
-                            :
-                            filteredAlerts?.length == 0 ?
-                                <Typography>
-                                    none
+                        alerts?.length ?
+                            <>
+                                <Typography
+                                    variant="h3"
+                                    sx={{
+                                        mt: 3,
+                                        mb: 1
+                                    }}
+                                >
+                                    active requests
                                 </Typography>
-                                :
-                                filteredAlerts?.map(x => (
+
+                                {alerts.map(x => (
                                     <Alert
                                         severity="info"
                                         variant="filled"
@@ -180,8 +148,12 @@ export const VolunteerDashboard = (): ReactNode => {
                                         }}
                                     >
                                         <Typography>
-                                            New pickup request at {pickupMap[x.pickupPointID]?.name || x.pickupPointID}!!
+                                            active pickup request for {pickupMap[x.pickupPointID]?.name || x.pickupPointID}
                                         </Typography>
+                                        <Typography>
+                                            acceptances: {responses[x.id]?.length || 0}
+                                        </Typography>
+
                                         <Stack
                                             justifyContent="end"
                                             width={1}
@@ -190,70 +162,83 @@ export const VolunteerDashboard = (): ReactNode => {
                                             alignItems="center"
                                         >
                                             <Button
-                                                color="error"
+                                                color="primary"
                                                 variant="contained"
                                                 onClick={async () => {
-                                                    await APIManager.PickupRequest.deny(x.id);
-                                                    reload();
+                                                    let res = await APIManager.request({
+                                                        method: "post",
+                                                        url: `/pickuprequests/${x.id}/execute-routing`
+                                                    });
+
+                                                    console.log("\n\n\nHERE::\n");
+                                                    console.log(res);
                                                 }}
                                             >
-                                                deny
-                                            </Button>
-                                            <Button
-                                                color="success"
-                                                variant="contained"
-                                                onClick={async () => {
-                                                    await APIManager.PickupRequest.accept(x.id);
-                                                    if ("geolocation" in navigator) {
-                                                        navigator.geolocation.getCurrentPosition(async position => {
-                                                            await APIManager.User.sendLocation(position.coords.latitude, position.coords.longitude);
-                                                        });
-                                                    }
-                                                    reload();
-                                                }}
-                                            >
-                                                accept
+                                                process
                                             </Button>
                                         </Stack>
                                     </Alert>
-                                ))
+                                ))}
+                            </>
+                            : null
                     }
                 </Stack>
 
-                <Typography
-                    variant="h3"
+                <Stack
+                    gap={2}
                     sx={{
-                        mt: 3,
-                        mb: 1
+                        mb: 2
                     }}
                 >
-                    upcoming jobs
-                </Typography>
+                    <Typography
+                        variant="h3"
+                        sx={{
+                            mt: 3,
+                            mb: 1
+                        }}
+                    >
+                        job requests
+                    </Typography>
 
-                {
-                    [
-                        "14:00 job 1",
-                        "15:00 job 2",
-                        "16:00 job 3"
-                    ].map(x => (
-                        <Accordion
-                            variant="outlined"
-                            key={x}
-                        >
-                            <AccordionSummary>
-                                <Typography>
-                                    {x}
-                                </Typography>
-                            </AccordionSummary>
-                            <AccordionDetails>
-                                job from x to y, taking n minutes
-                            </AccordionDetails>
-                        </Accordion>
-                    ))
-                }
+                    <FormControl>
+                        <FormLabel>pickup point ID</FormLabel>
+                        <TextField
+                            value={submissionID}
+                            onChange={e => setSubmissionID(e.target.value)}
+                        />
+                    </FormControl>
 
+                    <Button
+                        variant="contained"
+                        onClick={async () => {
+                            setSubmissionError("");
+                            let pickup = await APIManager.Pickup.get(submissionID);
+                            if (!pickup) {
+                                setSubmissionError("not a real pickup point id");
+                                return;
+                            }
+
+                            await APIManager.PickupRequest.create({
+                                id: "",
+                                pickupPointID: submissionID
+                            });
+                            reload();
+                        }}
+                    >
+                        create pickup request
+                    </Button>
+                    {
+                        submissionError ?
+                            <Alert
+                                severity="error"
+                                variant="filled"
+                            >
+                                {submissionError}
+                            </Alert>
+                            : null
+                    }
+                </Stack>
                 <Logout />
-
             </Box>
         </Stack>
     );

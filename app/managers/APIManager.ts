@@ -113,7 +113,7 @@ export class APIManager {
             }
         }
 
-        static async create(request: PickupRequestObject): Promise<boolean> {
+        static async create(request: PickupRequestObject): Promise<string> {
             try {
                 let res = await APIManager.request({
                     method: "post",
@@ -121,10 +121,10 @@ export class APIManager {
                     data: request
                 });
 
-                if (res?.status == 200) return res.data;
-                else return false;
+                if (res?.status == 200) return res?.data;
+                else return "";
             } catch {
-                return false;
+                return "";
             }
         }
 
@@ -474,13 +474,14 @@ export class APIManager {
             }
         }
 
-        static async sendLocation(loc: string): Promise<boolean> {
+        static async sendLocation(lat: number, lon: number): Promise<boolean> {
             try {
                 let res = await APIManager.request({
                     method: "post",
                     url: "/user/me/location",
                     data: {
-                        location: loc
+                        latitude: lat,
+                        longitude: lon
                     }
                 });
 
