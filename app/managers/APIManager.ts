@@ -1,7 +1,7 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from "axios";
 import config from "../../config/config.json";
 
-enum UserType {
+export enum UserType {
     Volunteer = 0,
     Manager = 1
 }
