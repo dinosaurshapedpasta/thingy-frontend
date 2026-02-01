@@ -2,13 +2,14 @@ import { Accordion, AccordionDetails, AccordionSummary, Alert, alertClasses, Box
 import { useContext, useEffect, useState, type ReactNode } from "react";
 import { ModeSwitcher } from "~/components/ModeSwitcher";
 import { AuthGuardUserContext } from "~/context/AuthGuardUserContext";
-import { APIManager, type PickupObject, type PickupRequestObject } from "~/managers/APIManager";
+import { APIManager, type PickupObject, type PickupRequestObject, type PickupRequestResponseObject } from "~/managers/APIManager";
 
 export const VolunteerDashboard = (): ReactNode => {
     const [alerts, setAlerts] = useState<PickupRequestObject[]>();
     const [pickupMap, setPickupMap] = useState<{ [K: string]: PickupObject | undefined; }>({});
-    const [fullyLoaded, setFullyLoaded] = useState(false);
-    const [responses, setResponses] = useState(false);
+    const [fullyLoaded1, setFullyLoaded1] = useState(false);
+    const [fullyLoaded2, setFullyLoaded2] = useState(false);
+    const [responses, setResponses] = useState<{ [K: string]: PickupRequestResponseObject[] | undefined; }>({});
     const [reloadThingsToggle, setReloadThingsToggle] = useState(false);
     const ctx = useContext(AuthGuardUserContext);
 
@@ -24,21 +25,31 @@ export const VolunteerDashboard = (): ReactNode => {
 
     useEffect(() => {
         let newMap = pickupMap;
-        setFullyLoaded(false);
+        setFullyLoaded1(false);
         alerts?.forEach(async (x, i, a) => {
             newMap[x.pickupPointID] = await APIManager.Pickup.get(x.pickupPointID);
             setPickupMap(newMap);
-            if (i == a.length - 1) setFullyLoaded(true);
+            if (i == a.length - 1) setFullyLoaded1(true);
         });
     }, [alerts]);
 
     useEffect(() => {
-
-    });
+        let newResponses = responses;
+        setFullyLoaded2(false);
+        alerts?.forEach(async (x, i, a) => {
+            newResponses[x.id] = await APIManager.PickupRequest.getResponses(x.id);
+            setResponses(newResponses);
+            if (i == a.length - 1) setFullyLoaded2(true);
+        });
+    }, [alerts]);
 
     const reload = () => {
         setReloadThingsToggle(!reloadThingsToggle);
     };
+
+    const fullyLoaded = fullyLoaded1 && fullyLoaded2;
+
+    const filteredAlerts = alerts?.filter(x => !responses[x.id]?.map(y => y.userID).includes(me?.id || ""));
 
     return (
         <Stack
@@ -111,12 +122,12 @@ export const VolunteerDashboard = (): ReactNode => {
                             loading...
                         </Typography>
                         :
-                        alerts.length == 0 ?
+                        filteredAlerts?.length == 0 ?
                             <Typography>
                                 none
                             </Typography>
                             :
-                            alerts.map(x => (
+                            filteredAlerts?.map(x => (
                                 <Alert
                                     severity="info"
                                     variant="filled"
